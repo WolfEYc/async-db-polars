@@ -5,7 +5,7 @@ description = "High level DB abstraction that uses polars to represent tables in
 authors = ["WolfEYc <wolfeycode@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "async-db-polars" }]
+packages = [{ include = "interface" }, { include = "pg" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -13,6 +13,7 @@ polars = "^0.20.3"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.28.0"
+python-dotenv = "^1.0.0"
 
 [tool.poetry.group.pg]
 optional = true
