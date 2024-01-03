@@ -1,0 +1,1 @@
+High level DB abstraction that uses polars to represent tables in memory.
