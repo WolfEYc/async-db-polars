@@ -5,7 +5,7 @@ import asyncpg
 import polars as pl
 from polars.type_aliases import SchemaDict
 
-from interface.db import DB
+from async_db_polars.db import DB
 
 
 def res_to_df(
