@@ -56,7 +56,17 @@ POLARS_TO_POSTGRES_TYPE_MAP = {
     str(pl.Date): "DATE",
     str(pl.Datetime): "TIMESTAMP",
     str(pl.Utf8): "TEXT",
+    str(pl.String): "TEXT",
 }
+
+
+def map_to_postgres_type(polars_type: str):
+    try:
+        return filter(
+            lambda x: polars_type in x, POLARS_TO_POSTGRES_TYPE_MAP.keys()
+        ).__next__()
+    except StopIteration:
+        raise ValueError(f"Polars type {polars_type} is not supported by Postgres.")
 
 
 class PGDB(DB):
@@ -94,7 +104,7 @@ class PGDB(DB):
 
         placeholder_fillers = ", ".join(
             map(
-                lambda x: f"${x[0]}::{POLARS_TO_POSTGRES_TYPE_MAP[str(x[1][1])]}[]",
+                lambda x: f"${x[0]}::{map_to_postgres_type(str(x[1][1]))}[]",
                 enumerate(df.schema.items(), 1),
             )
         )
