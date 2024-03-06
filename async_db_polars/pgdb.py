@@ -63,8 +63,8 @@ POLARS_TO_POSTGRES_TYPE_MAP = {
 def map_to_postgres_type(polars_type: str):
     try:
         return filter(
-            lambda x: polars_type in x, POLARS_TO_POSTGRES_TYPE_MAP.keys()
-        ).__next__()
+            lambda x: polars_type in x, POLARS_TO_POSTGRES_TYPE_MAP.items()
+        ).__next__()[1]
     except StopIteration:
         raise ValueError(f"Polars type {polars_type} is not supported by Postgres.")
 
