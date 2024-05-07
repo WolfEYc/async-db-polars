@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import Optional
+from typing import Awaitable, Callable, Optional
 
 import asyncpg
 import polars as pl
@@ -41,7 +41,7 @@ def kwargs_to_sql(query: str, **kwargs):
 
 
 POLARS_TO_POSTGRES_TYPE_MAP = {
-    str(pl.Object): "TEXT",
+    str(pl.Object): "UUID",
     str(pl.Boolean): "BOOLEAN",
     str(pl.UInt8): "SMALLINT",
     str(pl.UInt16): "SMALLINT",
@@ -53,8 +53,8 @@ POLARS_TO_POSTGRES_TYPE_MAP = {
     str(pl.Int64): "BIGINT",
     str(pl.Float32): "REAL",
     str(pl.Float64): "DOUBLE PRECISION",
-    str(pl.Date): "DATE",
-    str(pl.Datetime): "TIMESTAMP",
+    "Datetime": "TIMESTAMP",
+    "Date": "DATE",
     str(pl.Utf8): "TEXT",
     str(pl.String): "TEXT",
 }
@@ -62,18 +62,29 @@ POLARS_TO_POSTGRES_TYPE_MAP = {
 
 def map_to_postgres_type(polars_type: str):
     try:
-        return filter(
-            lambda x: polars_type in x, POLARS_TO_POSTGRES_TYPE_MAP.items()
-        ).__next__()[1]
+        return next(
+            filter(lambda x: x[0] in polars_type, POLARS_TO_POSTGRES_TYPE_MAP.items())
+        )[1]
     except StopIteration:
         raise ValueError(f"Polars type {polars_type} is not supported by Postgres.")
 
 
 class PGDB(DB):
-    pool: asyncpg.Pool
+    pool: Optional[asyncpg.Pool] = None
+    init_func: Optional[Callable[[], Awaitable[asyncpg.Pool]]] = None
 
-    def init(self, pool: asyncpg.Pool):
-        self.pool = pool
+    def __init__(
+        self,
+        pool_or_pool_factory: asyncpg.Pool | Callable[[], Awaitable[asyncpg.Pool]],
+    ):
+        if isinstance(pool_or_pool_factory, asyncpg.Pool):
+            self.pool = pool_or_pool_factory
+        else:
+            self.init_func = pool_or_pool_factory
+
+    async def close(self):
+        if self.pool is not None:
+            await self.pool.close()
 
     async def fetch(
         self,
@@ -83,8 +94,10 @@ class PGDB(DB):
         timeout: Optional[float] = None,
         **kwargs,
     ):
-        numbered_args_query = kwargs_to_sql(query, **kwargs)
+        if self.pool is None:
+            self.pool = await self.init_func()  # type: ignore
 
+        numbered_args_query = kwargs_to_sql(query, **kwargs)
         res = await self.pool.fetch(
             numbered_args_query, *kwargs.values(), timeout=timeout
         )
@@ -100,6 +113,9 @@ class PGDB(DB):
         return_schema_overrides: Optional[SchemaDict] = None,
         timeout: Optional[float] = None,
     ):
+        if self.pool is None:
+            self.pool = await self.init_func()  # type: ignore
+
         cols_sql = ", ".join(df.columns)
 
         placeholder_fillers = ", ".join(
