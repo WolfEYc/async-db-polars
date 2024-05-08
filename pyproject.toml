@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async-db-polars"
-version = "0.1.6"
+version = "0.1.7"
 description = "High level DB abstraction that uses polars to represent tables in memory."
 authors = ["WolfEYc <wolfeycode@gmail.com>"]
 license = "MIT"
