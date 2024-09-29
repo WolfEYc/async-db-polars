@@ -1,21 +1,17 @@
-[tool.poetry]
+[project]
 name = "async-db-polars"
-version = "0.1.7"
+version = "0.1.8"
 description = "High level DB abstraction that uses polars to represent tables in memory."
-authors = ["WolfEYc <wolfeycode@gmail.com>"]
+authors = [{ name = "WolfEYc", email = "wolfeycode@gmail.com" }]
 license = "MIT"
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["polars", "asyncpg"]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-polars = "^0.20.3"
-asyncpg = "^0.29.0"
-
-[tool.poetry.group.dev.dependencies]
-ipykernel = "^6.28.0"
-python-dotenv = "^1.0.0"
+[tool.uv]
+dev-dependencies = ["ruff", "python-dotenv", "ipykernel"]
 
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
